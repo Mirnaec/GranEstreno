@@ -18,24 +18,25 @@
             color: #ffffff; display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding: 40px 20px; 
         }
 
-        /* ESTILOS DEL BANNER DINÁMICO */
+        /* ESTILOS DEL BANNER DINÁMICO CORREGIDOS */
         .header-img-container { 
             width: 100%; max-width: 600px; margin-bottom: 30px; 
-            text-align: center; position: relative;
-            min-height: 120px; /* Espacio mínimo para que no salte el diseño mientras carga */
-            display: flex; justify-content: center; align-items: center;
+            display: grid; place-items: center; /* Centrado perfecto con Grid */
+            min-height: 200px; 
         }
         .header-img-container img { 
-            width: 100%; height: auto; max-width: 400px; object-fit: contain; 
-            display: none; position: absolute; /* Absoluto para que se superpongan en el carrusel */
-            top: 0; left: 50%; transform: translateX(-50%);
-            transition: opacity 1s ease-in-out; opacity: 0;
+            grid-area: 1 / 1; /* Apila todas las fotos exactamente en el mismo espacio */
+            width: 100%; height: auto; max-width: 400px; object-fit: cover; 
+            border-radius: 16px; /* Bordes redondeados */
+            box-shadow: 0 8px 25px rgba(0,0,0,0.4); /* Sombra elegante */
+            opacity: 0; transition: opacity 1s ease-in-out;
         }
         .header-img-container img.active {
-            display: block; opacity: 1; position: relative; /* El activo da la altura al contenedor */
+            opacity: 1; z-index: 2;
         }
-        .loader-banner { color: #d4af37; font-size: 14px; font-style: italic; }
+        .loader-banner { grid-area: 1 / 1; color: #d4af37; font-size: 14px; font-style: italic; z-index: 1; }
 
+        /* ESTILOS DEL FORMULARIO Y CONTENEDOR */
         .container { 
             background: rgba(10, 17, 66, 0.85); backdrop-filter: blur(10px);
             padding: 40px 30px; border-radius: 16px; border: 2px solid #d4af37; 
@@ -83,7 +84,7 @@
         .error { background: rgba(224, 0, 98, 0.2); color: #ff6b9e; border: 1px solid #e00062; }
         .loading { display: none; margin-top: 15px; color: #d4af37; font-size: 14px; font-weight: bold; font-style: italic; }
 
-        /* Modales */
+        /* MODALES */
         .modal-overlay {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); z-index: 1000; 
@@ -190,26 +191,24 @@
 <script>
     const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwxB-EMn4prn7QWKD6OwijTvr3FMo06Rowz2sIhaaxc-e_F53CwjZTpSh1m9AE87t8g/exec';
 
-    // 1. CARGAR IMÁGENES AL ABRIR LA PÁGINA
+    // CARGAR IMÁGENES AL ABRIR LA PÁGINA
     document.addEventListener("DOMContentLoaded", function() {
         const bannerContainer = document.getElementById('bannerContainer');
         const loader = document.getElementById('bannerLoader');
 
-        fetch(APPS_SCRIPT_URL) // Hace un GET por defecto
+        fetch(APPS_SCRIPT_URL)
         .then(response => response.json())
         .then(data => {
             if(data.resultado === 'exito' && data.imagenes.length > 0) {
-                loader.style.display = 'none'; // Ocultamos el texto de carga
+                loader.style.display = 'none';
                 
-                // Creamos las etiquetas img dinámicamente
                 data.imagenes.forEach((url, index) => {
                     const img = document.createElement('img');
                     img.src = url;
-                    if(index === 0) img.classList.add('active'); // Mostrar la primera
+                    if(index === 0) img.classList.add('active');
                     bannerContainer.appendChild(img);
                 });
 
-                // Si hay más de 1 imagen, arranca el carrusel
                 if(data.imagenes.length > 1) {
                     let currentIndex = 0;
                     const images = bannerContainer.querySelectorAll('img');
@@ -218,10 +217,10 @@
                         images[currentIndex].classList.remove('active');
                         currentIndex = (currentIndex + 1) % images.length;
                         images[currentIndex].classList.add('active');
-                    }, 3500); // Cambia cada 3.5 segundos
+                    }, 3500);
                 }
             } else {
-                loader.innerText = "Bienvenido al Gran Estreno"; // Por si no hay links
+                loader.innerText = "Bienvenido al Gran Estreno";
             }
         })
         .catch(error => {
@@ -230,7 +229,7 @@
         });
     });
 
-    // 2. LÓGICA DE MODALES (Igual que antes)
+    // LÓGICA DE MODALES
     const modalOverlayTc = document.getElementById('modalOverlayTc');
     document.getElementById('openModalTc').addEventListener('click', () => { modalOverlayTc.style.display = 'flex'; });
     document.getElementById('closeModalTc').addEventListener('click', () => { modalOverlayTc.style.display = 'none'; });
@@ -243,7 +242,7 @@
         if (e.target === modalOverlaySuccess) modalOverlaySuccess.style.display = 'none';
     });
 
-    // 3. LÓGICA DE ENVÍO DE FORMULARIO
+    // LÓGICA DE ENVÍO DE FORMULARIO
     document.getElementById('registroForm').addEventListener('submit', function(e) {
         e.preventDefault();
         
