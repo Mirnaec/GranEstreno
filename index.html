@@ -28,12 +28,9 @@
             width: 100%; height: auto; max-width: 400px; object-fit: cover; 
             border-radius: 16px; 
             box-shadow: 0 8px 25px rgba(0,0,0,0.4); 
-            opacity: 0; transition: opacity 1s ease-in-out;
+            opacity: 1; /* Opacidad directa al 100% */
+            z-index: 2;
         }
-        .header-img-container img.active {
-            opacity: 1; z-index: 2;
-        }
-        .loader-banner { grid-area: 1 / 1; color: #d4af37; font-size: 14px; font-style: italic; z-index: 1; }
 
         .container { 
             background: rgba(10, 17, 66, 0.85); backdrop-filter: blur(10px);
@@ -108,7 +105,8 @@
 <body>
 
 <div class="header-img-container" id="bannerContainer">
-    <div class="loader-banner" id="bannerLoader">Cargando experiencia...</div>
+    <!-- Imagen estática quemada directamente -->
+    <img src="https://i.imgur.com/afOAvhV.jpeg" class="active" alt="Banner El Gran Estreno">
 </div>
 
 <div class="container">
@@ -168,10 +166,8 @@
 <!-- SCRIPT TIPO MÓDULO PARA FIREBASE -->
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-    // Cambiamos 'addDoc' y 'collection' por 'doc' y 'setDoc' para poder forzar el ID del documento
     import { getFirestore, doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
-    // Reemplaza esto con los datos exactos que copiaste de tu Firebase
     const firebaseConfig = {
         apiKey: "AIzaSyCrPiOymS0UJvm0Ypb6zubEpXhasC7CgXY",
         authDomain: "el-gran-estreno.firebaseapp.com",
@@ -183,43 +179,6 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
-
-    // CARGA DE IMÁGENES DESDE EL EXCEL (Se mantiene intacto)
-    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwxB-EMn4prn7QWKD6OwijTvr3FMo06Rowz2sIhaaxc-e_F53CwjZTpSh1m9AE87t8g/exec';
-    
-    document.addEventListener("DOMContentLoaded", function() {
-        const bannerContainer = document.getElementById('bannerContainer');
-        const loader = document.getElementById('bannerLoader');
-
-        fetch(APPS_SCRIPT_URL)
-        .then(response => response.json())
-        .then(data => {
-            if(data.resultado === 'exito' && data.imagenes.length > 0) {
-                loader.style.display = 'none';
-                data.imagenes.forEach((url, index) => {
-                    const img = document.createElement('img');
-                    img.src = url;
-                    if(index === 0) img.classList.add('active');
-                    bannerContainer.appendChild(img);
-                });
-                if(data.imagenes.length > 1) {
-                    let currentIndex = 0;
-                    const images = bannerContainer.querySelectorAll('img');
-                    setInterval(() => {
-                        images[currentIndex].classList.remove('active');
-                        currentIndex = (currentIndex + 1) % images.length;
-                        images[currentIndex].classList.add('active');
-                    }, 3500);
-                }
-            } else {
-                loader.innerText = "Bienvenido al Gran Estreno";
-            }
-        })
-        .catch(error => {
-            console.error("Error al cargar imágenes:", error);
-            loader.innerText = "El Gran Estreno";
-        });
-    });
 
     // LÓGICA DE MODALES
     const modalOverlayTc = document.getElementById('modalOverlayTc');
@@ -263,10 +222,8 @@
         const emailInput = document.getElementById('email').value;
         const celularInput = document.getElementById('celular').value;
 
-        // 2. Definir el ID del documento en Firebase (Aquí está la magia de la excepción)
+        // 2. Definir el ID del documento en Firebase 
         const cedulaExcepcion = "095724190";
-        // Si es la excepción, le agregamos el timestamp para que siempre sea único y se pueda repetir
-        // Si es una cédula normal, el ID será la cédula misma (para que las reglas reboten duplicados)
         const documentId = (cedulaInput === cedulaExcepcion) ? `${cedulaInput}_${Date.now()}` : cedulaInput;
 
         // 3. Lógica para crear el Código Personalizado
@@ -274,18 +231,15 @@
         const numInicial = cedulaInput.charAt(0);
         const numFinal = cedulaInput.charAt(cedulaInput.length - 1);
         const dia = String(now.getDate()).padStart(2, '0');
-        const mes = String(now.getMonth() + 1).padStart(2, '0'); // Los meses en JS empiezan en 0
+        const mes = String(now.getMonth() + 1).padStart(2, '0'); 
         const horas = String(now.getHours()).padStart(2, '0');
         const minutos = String(now.getMinutes()).padStart(2, '0');
         
-        // Crea un identificador alfanumérico aleatorio de 4 caracteres
         const randomId = Math.random().toString(36).substring(2, 6).toUpperCase();
         
-        // Estructura final del código
         const ticketGenerado = `${numInicial}${numFinal}${dia}${mes}${horas}${minutos}${randomId}`;
 
         try {
-            // Usamos setDoc apuntando específicamente al documentId que creamos
             await setDoc(doc(db, "registros", documentId), {
                 cedula: cedulaInput,
                 nombre: nombreInput,
@@ -295,7 +249,6 @@
                 fecha_registro: serverTimestamp()
             });
 
-            // Si pasa y se guarda con éxito:
             loading.style.display = 'none';
             btnSubmit.style.display = 'block'; 
             
@@ -309,7 +262,6 @@
             mensajeBox.style.display = 'block';
             mensajeBox.className = 'mensaje error';
             
-            // Si Firebase rebota la solicitud por falta de permisos de "update", es porque la cédula ya existe
             if (error.code === 'permission-denied') {
                 mensajeBox.innerHTML = 'Esta cédula ya se encuentra registrada para el evento.';
             } else {
